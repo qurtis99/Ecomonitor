@@ -1,0 +1,261 @@
+{% load static %} "static/main/css/main.css"
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Екологічна Таблиця</title>
+  <link rel="stylesheet" href="{% static 'main/css/main.css' %}" />
+</head>
+<body>
+  <h1>Екологічні Дані</h1>
+
+  <!-- Таблиця підприємств -->
+  <section id="enterprise-section">
+    <h2>Таблиця Підприємств</h2>
+    <table id="enterpriseTable">
+      <thead>
+        <tr>
+          <th>№</th>
+          <th>Назва підприємства</th>
+          <th>Адреса</th>
+          <th>Тип діяльності</th>
+          <th>Дії</th>
+        </tr>
+      </thead>
+      <tbody>
+           {% for enterprise in enterprises %}
+           <tr>
+             <td>{{ forloop.counter }}</td>
+             <td>{{ enterprise.enterprise_name }}</td>
+             <td>{{ enterprise.address }}</td>
+             <td>{{ enterprise.type_enterprise }}</td>
+            <td>
+               <a href="{% url 'edit_enterprise' enterprise.id %}">
+                  <button>Редагувати</button>
+               </a>
+               <a href="{% url 'delete_enterprise' enterprise.id %}">
+                  <button>Видалити</button>
+               </a>
+            </td>
+           </tr>
+  {% endfor %}
+      </tbody>
+    </table>
+    <form id="enterprise-form" method="post" action="{% url 'home' %}">
+  {% csrf_token %}
+  <h3>Додати нове підприємство</h3>
+  <input type="text" id="new-enterprise-name" name="new-enterprise-name" placeholder="Назва підприємства" required />
+  <input type="text" id="new-enterprise-address" name="new-enterprise-address" placeholder="Адреса" required />
+  <input type="text" id="new-enterprise-activity" name="new-enterprise-activity" placeholder="Тип діяльності" required />
+  <button type="submit">Додати підприємство</button>
+</form>
+  </section>
+
+  {% if enterprise_to_edit %}
+<section>
+  <h3>Редагувати підприємство</h3>
+  <form method="post" action="{% url 'edit_enterprise' enterprise_to_edit.id %}">
+    {% csrf_token %}
+    <input type="text" name="edit-enterprise-name" value="{{ enterprise_to_edit.enterprise_name }}" required />
+    <input type="text" name="edit-enterprise-address" value="{{ enterprise_to_edit.address }}" required />
+    <input type="text" name="edit-enterprise-activity" value="{{ enterprise_to_edit.type_enterprise }}" required />
+    <button type="submit">Зберегти</button>
+  </form>
+</section>
+{% endif %}
+
+
+  <!-- Таблиця забруднюючих речовин -->
+<section id="pollutant-section">
+  <h2>Таблиця Забруднюючих Речовин</h2>
+  <table id="pollutantTable">
+    <thead>
+      <tr>
+        <th>№</th>
+        <th>Назва речовини</th>
+        <th>Клас небезпеки</th>
+        <th>ГДК мг/м^3</th>
+        <th>Дії</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for pollutant in pollutants %}
+      <tr>
+        <td>{{ forloop.counter }}</td>
+        <td>{{ pollutant.pollutant_name }}</td>
+        <td>{{ pollutant.danger_class }}</td>
+        <td>{{ pollutant.GDK }}</td>
+        <td>
+          <a href="{% url 'edit_pollutant' pollutant.id %}">
+            <button>Редагувати</button>
+          </a>
+          <a href="{% url 'delete_pollutant' pollutant.id %}">
+            <button>Видалити</button>
+          </a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <form id="pollutant-form" method="post" action="{% url 'home' %}">
+    {% csrf_token %}
+    <h3>Додати нову забруднюючу речовину</h3>
+    <input type="text" id="new-pollutant-name" name="new-pollutant-name" placeholder="Назва речовини" required />
+    <input type="text" id="new-hazard-class" name="new-hazard-class" placeholder="Клас небезпеки" required />
+    <input type="number" id="new-mpc" name="new-mpc" placeholder="ГДК" step="0.01" required />
+    <button type="submit">Додати речовину</button>
+  </form>
+</section>
+
+{% if pollutant_to_edit %}
+<section>
+  <h3>Редагувати забруднюючу речовину</h3>
+  <form method="post" action="{% url 'edit_pollutant' pollutant_to_edit.id %}">
+    {% csrf_token %}
+    <input type="text" name="edit-pollutant-name" value="{{ pollutant_to_edit.pollutant_name }}" required />
+    <input type="text" name="edit-hazard-class" value="{{ pollutant_to_edit.danger_class }}" required />
+    <input type="number" name="edit-mpc" value="{{ pollutant_to_edit.GDK }}" step="0.01" required />
+    <button type="submit">Зберегти</button>
+  </form>
+</section>
+{% endif %}
+
+
+ <section id="emission-section">
+    <h2>Таблиця Викидів</h2>
+    <div style="text-align: center;">
+      <form method="get" action=".">
+        <input type="text" name="search_query" placeholder="Пошук за назвою підприємства або роком" value="{{ request.GET.search_query }}" />
+        <button type="submit">Пошук</button>
+      </form>
+    </div>
+    <table id="emissionsTable">
+      <thead>
+        <tr>
+          <th>№</th>
+          <th>
+            Об'єкт
+            <a href="?sort_by=enterprise__enterprise_name&order=asc&search_query={{ request.GET.search_query }}">↑</a>
+            <a href="?sort_by=enterprise__enterprise_name&order=desc&search_query={{ request.GET.search_query }}">↓</a>
+          </th>
+          <th>
+            Речовина
+            <a href="?sort_by=pollutant__pollutant_name&order=asc&search_query={{ request.GET.search_query }}">↑</a>
+            <a href="?sort_by=pollutant__pollutant_name&order=desc&search_query={{ request.GET.search_query }}">↓</a>
+          </th>
+          <th>
+            Рік
+            <a href="?sort_by=year&order=asc&search_query={{ request.GET.search_query }}">↑</a>
+            <a href="?sort_by=year&order=desc&search_query={{ request.GET.search_query }}">↓</a>
+          </th>
+          <th>Тип</th>
+          <th>
+            Об'єм
+            <a href="?sort_by=volume&order=asc&search_query={{ request.GET.search_query }}">↑</a>
+            <a href="?sort_by=volume&order=desc&search_query={{ request.GET.search_query }}">↓</a>
+          </th>
+          <th>Дії</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for record in records %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td>{{ record.enterprise.enterprise_name }}</td>
+          <td>{{ record.pollutant.pollutant_name }}</td>
+          <td>{{ record.year }}</td>
+          <td>{{ record.type }}</td>
+          <td>{{ record.volume }}</td>
+          <td>
+            <a href="{% url 'edit_record' record.id %}"><button>Редагувати</button></a>
+            <a href="{% url 'delete_record' record.id %}"><button>Видалити</button></a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <form id="addEmissionForm" method="post" action="{% url 'home' %}">
+      {% csrf_token %}
+      <h3>Додати викиди</h3>
+
+      <label for="object-name-input">Назва об'єкта:</label>
+      <select id="object-name-input" name="object-name-input" required>
+        {% for enterprise in enterprises %}
+          <option value="{{ enterprise.id }}">{{ enterprise.enterprise_name }}</option>
+        {% endfor %}
+      </select>
+
+      <label for="pollutant-name-input">Речовина:</label>
+      <select id="pollutant-name-input" name="pollutant-name-input" required>
+        {% for pollutant in pollutants %}
+          <option value="{{ pollutant.id }}">{{ pollutant.pollutant_name }}</option>
+        {% endfor %}
+      </select>
+
+      <label for="report-year-input">Рік:</label>
+      <input type="number" id="report-year-input" name="report-year-input" required />
+
+      <label for="report-type-input">Тип:</label>
+      <select id="report-type-input" name="report-type-input" required>
+        <option value="Повітря">Повітря</option>
+        <option value="Вода">Вода</option>
+        <option value="Радіоактивні">Радіоактивні</option>
+      </select>
+
+      <label for="emission-volume-input">Об'єм:</label>
+      <input type="number" id="emission-volume-input" name="emission-volume-input" step="0.01" required />
+
+      <button type="submit">Додати</button>
+    </form>
+
+
+
+
+
+    {% if record_to_edit %}
+<section>
+  <h3>Редагувати запис викиду</h3>
+  <form method="post" action="{% url 'edit_record' record_to_edit.id %}">
+    {% csrf_token %}
+    <label for="edit-object-name">Об'єкт:</label>
+    <select id="edit-object-name" name="edit-object-name" required>
+      {% for enterprise in enterprises %}
+      <option value="{{ enterprise.id }}" {% if enterprise.id == record_to_edit.enterprise.id %}selected{% endif %}>
+        {{ enterprise.enterprise_name }}
+      </option>
+      {% endfor %}
+    </select>
+
+    <label for="edit-pollutant-name">Речовина:</label>
+    <select id="edit-pollutant-name" name="edit-pollutant-name" required>
+      {% for pollutant in pollutants %}
+      <option value="{{ pollutant.id }}" {% if pollutant.id == record_to_edit.pollutant.id %}selected{% endif %}>
+        {{ pollutant.pollutant_name }}
+      </option>
+      {% endfor %}
+    </select>
+
+    <label for="edit-report-year">Рік:</label>
+    <input type="number" id="edit-report-year" name="edit-report-year" value="{{ record_to_edit.year }}" required />
+
+    <label for="edit-report-type">Тип:</label>
+    <select id="edit-report-type" name="edit-report-type" required>
+      <option value="Повітря" {% if record_to_edit.type == "Повітря" %}selected{% endif %}>Повітря</option>
+      <option value="Вода" {% if record_to_edit.type == "Вода" %}selected{% endif %}>Вода</option>
+      <option value="Радіоактивні" {% if record_to_edit.type == "Радіоактивні" %}selected{% endif %}>Радіоактивні</option>
+    </select>
+
+    <label for="edit-emission-volume">Об'єм:</label>
+    <input type="number" id="edit-emission-volume" name="edit-emission-volume" step="0.01" value="{{ record_to_edit.volume }}" required />
+
+    <button type="submit">Зберегти</button>
+  </form>
+</section>
+{% endif %}
+
+
+  </section>
+</body>
+</html>

@@ -1,0 +1,156 @@
+:root {
+  --primary-bg-color: #f5e9cd;
+  --secondary-bg-color: #cc7e00;
+  --accent-color: #e2b147 ;
+  --text-color: #f5f5f5;
+  --border-color: #444;
+  --button-hover-bg: #d2bf94;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background-color: var(--primary-bg-color);
+  color: var(--text-color);
+  margin: 0;
+  padding: 0;
+}
+
+
+h1 {
+  background-color: var(--accent-color);
+  color: var(--text-color);
+  padding: 20px;
+  margin: 0;
+  text-align: center;
+  font-size: 2.5rem;
+  border-bottom: 4px solid var(--button-hover-bg);
+}
+
+h2, h3 {
+  text-align: center;
+  color: var(--accent-color);
+}
+
+table {
+  margin: 20px auto;
+  border-collapse: collapse;
+  width: 80%;
+  background-color: var(--secondary-bg-color);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+table td, table thead, table th{
+    padding: 10px; /* Менше відступи в клітинках */
+}
+
+th, td {
+  padding: 15px;
+  max-width: 200px;
+  word-wrap: break-word;
+  border: 1px solid var(--border-color);
+  text-align: center;
+  font-size: 1rem;
+}
+
+thead {
+  background-color: var(--accent-color);
+}
+
+button {
+  padding: 12px 20px;
+  margin: 10px;
+  background-color: var(--accent-color);
+  color: var(--text-color);
+  border: none;
+  border-radius: 5px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+button:hover {
+  background-color: var(--button-hover-bg);
+  transform: scale(1.1);
+}
+
+.sort-btn {
+  padding: 4px 5px;
+  background: none;
+  border: none;
+  color: var(--text-color);
+  font-size: 1.3rem;
+  cursor: pointer;
+  margin-left: 5px;
+}
+
+.sort-btn:hover {
+  color: var(--accent-color);
+  text-decoration: underline;
+}
+
+
+form {
+  margin: 20px auto;
+  padding: 20px;
+  background-color: var(--secondary-bg-color);
+  border: 2px solid var(--border-color);
+  border-radius: 10px;
+  width: 70%;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  text-align: center;
+}
+
+input, select {
+  margin: 10px 0;
+  padding: 10px;
+  width: 90%;
+  border: 1px solid var(--border-color);
+  border-radius: 5px;
+  background-color: #fff;
+  color: #333;
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+input:focus, select:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 5px var(--accent-color);
+}
+
+label {
+  display: block;
+  margin: 10px 0 5px;
+  color: var(--text-color);
+  text-align: left;
+}
+
+#search-input {
+  margin: 20px auto;
+  padding: 12px;
+  width: 50%;
+  border-radius: 5px;
+  border: 2px solid var(--border-color);
+  background-color: #fff;
+  color: #333;
+  font-size: 1rem;
+  text-align: center;
+}
+
+#search-btn {
+  display: block;
+  margin: 10px auto;
+}
+
+section {
+  margin-top: 20px;
+}
+
+#emissionsTable td, #emissionsTable th {
+  padding: 5px; /* Зменшення відступів */
+  font-size: 0.9rem; /* Зменшення розміру шрифту */
+}
+
+
+
