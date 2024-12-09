@@ -42,13 +42,17 @@ def home(request):
             name = request.POST['new-pollutant-name']
             hazard_class = request.POST['new-hazard-class']
             gdk = request.POST['new-mpc']
-            tax_rate = request.POST.get('new-tax-rate', 0.0)  # Отримання значення
+            tax_rate = request.POST.get('new-tax-rate', 0.0)
+            cancer_risk_type = request.POST['new-cancer-risk']
+            rfc = request.POST['new-rfc']
 
             Pollutant.objects.create(
                 pollutant_name=name,
                 danger_class=hazard_class,
                 GDK=gdk,
-                tax_rate=tax_rate  # Збереження в БД
+                tax_rate=tax_rate,
+                cancer_risk_type=cancer_risk_type,
+                rfc=rfc
             )
             return redirect('home')
 
@@ -64,13 +68,14 @@ def home(request):
             enterprise = get_object_or_404(Enterprise, id=enterprise_id)
             pollutant = get_object_or_404(Pollutant, id=pollutant_id)
 
-            Record.objects.create(
+            record = Record.objects.create(
                 enterprise=enterprise,
                 pollutant=pollutant,
                 year=year,
                 type=record_type,
                 volume=volume
             )
+            record.calculate_risk()  # Обчислення ризиків
             return redirect('home')
 
     return render(request, 'main/home.html', {
@@ -120,11 +125,11 @@ def edit_pollutant(request, id):
         pollutant.pollutant_name = request.POST['edit-pollutant-name']
         pollutant.danger_class = request.POST['edit-hazard-class']
         pollutant.GDK = request.POST['edit-mpc']
-        pollutant.tax_rate = request.POST['edit-tax-rate']  # Збереження нового значення
+        pollutant.tax_rate = request.POST['edit-tax-rate']
+        pollutant.cancer_risk_type = request.POST['edit-cancer-risk']
+        pollutant.rfc = request.POST['edit-rfc']
         pollutant.save()
         return redirect('home')
-
-
 
     enterprises = Enterprise.objects.all()
     pollutants = Pollutant.objects.all()
@@ -148,11 +153,8 @@ def edit_record(request, id):
         record.type = request.POST['edit-report-type']
         record.volume = float(request.POST['edit-emission-volume'])
 
-        # Перерахунок значень
-        record.tax_rate = record.pollutant.tax_rate
-        record.calculated_tax = record.tax_rate * record.volume
-
         record.save()
+        record.calculate_risk()  # Оновлення ризиків
         return redirect('home')
 
     enterprises = Enterprise.objects.all()
@@ -165,8 +167,3 @@ def edit_record(request, id):
         'records': records,
         'record_to_edit': record
     })
-
-
-
-
-

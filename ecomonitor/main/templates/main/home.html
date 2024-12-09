@@ -70,31 +70,36 @@
 <section id="pollutant-section">
   <h2>Таблиця Забруднюючих Речовин</h2>
   <table id="pollutantTable">
-  <thead>
-    <tr>
-      <th>№</th>
-      <th>Назва речовини</th>
-      <th>Клас небезпеки</th>
-      <th>ГДК мг/м^3</th>
-      <th>Ставка податку</th> <!-- Новий стовпчик -->
-      <th>Дії</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for pollutant in pollutants %}
-    <tr>
-      <td>{{ forloop.counter }}</td>
-      <td>{{ pollutant.pollutant_name }}</td>
-      <td>{{ pollutant.danger_class }}</td>
-      <td>{{ pollutant.GDK }}</td>
-      <td>{{ pollutant.tax_rate }}</td> <!-- Значення ставки -->
-      <td>
-        <a href="{% url 'edit_pollutant' pollutant.id %}"><button>Редагувати</button></a>
-        <a href="{% url 'delete_pollutant' pollutant.id %}"><button>Видалити</button></a>
-      </td>
-    </tr>
-    {% endfor %}
-  </tbody>
+ <thead>
+  <tr>
+    <th>№</th>
+    <th>Назва речовини</th>
+    <th>Клас небезпеки</th>
+    <th>ГДК мг/м³</th>
+    <th>Ставка податку</th>
+    <th>Тип канцерогенного ризику</th>
+    <th>RFC середньодобова концентрація</th>
+    <th>Дії</th>
+  </tr>
+</thead>
+<tbody>
+  {% for pollutant in pollutants %}
+  <tr>
+    <td>{{ forloop.counter }}</td>
+    <td>{{ pollutant.pollutant_name }}</td>
+    <td>{{ pollutant.danger_class }}</td>
+    <td>{{ pollutant.GDK }}</td>
+    <td>{{ pollutant.tax_rate }}</td>
+    <td>{{ pollutant.get_cancer_risk_type_display }}</td>
+    <td>{{ pollutant.rfc }}</td>
+    <td>
+      <a href="{% url 'edit_pollutant' pollutant.id %}"><button>Редагувати</button></a>
+      <a href="{% url 'delete_pollutant' pollutant.id %}"><button>Видалити</button></a>
+    </td>
+  </tr>
+  {% endfor %}
+</tbody>
+
 </table>
 
 <form id="pollutant-form" method="post" action="{% url 'home' %}">
@@ -103,7 +108,14 @@
   <input type="text" id="new-pollutant-name" name="new-pollutant-name" placeholder="Назва речовини" required />
   <input type="text" id="new-hazard-class" name="new-hazard-class" placeholder="Клас небезпеки" required />
   <input type="number" id="new-mpc" name="new-mpc" placeholder="ГДК" step="0.01" required />
-  <input type="number" id="new-tax-rate" name="new-tax-rate" placeholder="Ставка податку" step="0.01" required /> <!-- Новий рядок -->
+  <input type="number" id="new-tax-rate" name="new-tax-rate" placeholder="Ставка податку" step="0.01" required />
+  <!-- Нові поля -->
+  <select id="new-cancer-risk" name="new-cancer-risk" required>
+    <option value="cancerogenic">Канцерогенний</option>
+    <option value="non_cancerogenic">Неканцерогенний</option>
+  </select>
+  <input type="number" id="new-rfc" name="new-rfc" placeholder="RFC середньодобова концентрація" step="0.01" required />
+
   <button type="submit">Додати речовину</button>
 </form>
 
@@ -116,7 +128,13 @@
   <input type="text" name="edit-pollutant-name" value="{{ pollutant_to_edit.pollutant_name }}" required />
   <input type="text" name="edit-hazard-class" value="{{ pollutant_to_edit.danger_class }}" required />
   <input type="number" name="edit-mpc" value="{{ pollutant_to_edit.GDK }}" step="0.01" required />
-  <input type="number" name="edit-tax-rate" value="{{ pollutant_to_edit.tax_rate }}" step="0.01" required /> <!-- Нове поле -->
+  <input type="number" name="edit-tax-rate" value="{{ pollutant_to_edit.tax_rate }}" step="0.01" required />
+<!-- Нові поля -->
+    <select name="edit-cancer-risk" required>
+      <option value="cancerogenic" {% if pollutant_to_edit.cancer_risk_type == "cancerogenic" %}selected{% endif %}>Канцерогенний</option>
+      <option value="non_cancerogenic" {% if pollutant_to_edit.cancer_risk_type == "non_cancerogenic" %}selected{% endif %}>Неканцерогенний</option>
+    </select>
+    <input type="number" name="edit-rfc" value="{{ pollutant_to_edit.rfc }}" step="0.00001" required />
   <button type="submit">Зберегти</button>
 </form>
 
@@ -159,6 +177,9 @@
           </th>
           <th>Ставка податку (грн/т)</th>
           <th>Обраховане значення (грн)</th>
+          <th>Тип ризику</th>
+          <th>Рівень ризику</th>
+          <th>Ступінь ризику</th>
           <th>Дії</th>
         </tr>
       </thead>
@@ -171,8 +192,11 @@
           <td>{{ record.year }}</td>
           <td>{{ record.type }}</td>
           <td>{{ record.volume }}</td>
-          <td>{{ record.tax_rate }}</td> <!-- Відображення ставки -->
-          <td>{{ record.calculated_tax|floatformat:3 }}</td> <!-- Відображення обрахованого значення -->
+          <td>{{ record.tax_rate }}</td>
+          <td>{{ record.calculated_tax|floatformat:3 }}</td>
+          <td>{{ record.risk_type }}</td>
+          <td>{{ record.current_risk|floatformat:5 }}</td>
+          <td>{{ record.risk_level }}</td>
           <td>
             <a href="{% url 'edit_record' record.id %}"><button>Редагувати</button></a>
             <a href="{% url 'delete_record' record.id %}"><button>Видалити</button></a>
@@ -201,7 +225,9 @@
   </select>
 
       <label>Рік:</label>
-      <input type="number" name="report-year-input" placeholder="Рік звіту" required>
+      <input type="number" name="report-year-input" placeholder="Рік звіту" min="1980" max="2100" required>
+
+
 
   <label for="report-type-input">Тип забруднення:</label>
   <select id="report-type-input" name="report-type-input" required>
@@ -219,11 +245,6 @@
 
   <button type="submit">Додати</button>
 </form>
-
-
-   #коментар
-
-
 
     {% if record_to_edit %}
 <section>

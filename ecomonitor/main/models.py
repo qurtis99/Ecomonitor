@@ -2,17 +2,24 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 
 class Pollutant(models.Model):
+    # Існуючі поля
     pollutant_name = models.CharField(max_length=255, unique=True)
     danger_class = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(4)])
     GDK = models.FloatField(validators=[MinValueValidator(0)])
     tax_rate = models.FloatField(default=0.0, validators=[MinValueValidator(0.0)])
+    CANCEROGENIC_CHOICES = [
+        ('cancerogenic', 'Канцерогенний'),
+        ('non_cancerogenic', 'Неканцерогенний'),
+    ]
+    cancer_risk_type = models.CharField(max_length=20,choices=CANCEROGENIC_CHOICES, default='non_cancerogenic')
+    rfc = models.FloatField(validators=[MinValueValidator(0.0)],verbose_name="RFC середньодобова концентрація",default = 0.0)
+
 
     def update_related_records(self, danger_class_changed=False):
         from .models import Record
         records = Record.objects.filter(pollutant=self)
 
         if danger_class_changed:
-            # Оновлюємо тільки для типів "Зберігання..."
             storage_records = records.filter(
                 type__in=[
                     "Викиди в атмосферне повітря",
@@ -76,6 +83,10 @@ class Record(models.Model):
     volume = models.FloatField(validators=[MinValueValidator(0)])
     tax_rate = models.FloatField(default=0.0, validators=[MinValueValidator(0.0)])
     calculated_tax = models.FloatField(default=0.0, validators=[MinValueValidator(0.0)])
+    # Нові поля
+    risk_type = models.CharField(max_length=20, default='non_cancerogenic')  # Канцерогенний або неконцерогенний
+    current_risk = models.FloatField(default=0.0)  # Рівень ризику
+    risk_level = models.CharField(max_length=20, default='low')  # Низький, середній, високий
 
     class Meta:
         unique_together = ('year', 'enterprise', 'pollutant')
@@ -113,10 +124,40 @@ class Record(models.Model):
             return self.volume * base_rate * 2
         return 0.0
 
+    def calculate_risk(self):
+        concentration = self.volume / 365
+        if self.pollutant.cancer_risk_type == 'cancerogenic':
+            self.current_risk = (concentration * 20 * 365 * 70) / (70 * 70 * 365)
+            self.risk_type = 'cancerogenic'
+        else:
+            self.current_risk = concentration / self.pollutant.rfc
+            self.risk_type = 'non_cancerogenic'
+
+        if self.pollutant.cancer_risk_type == 'cancerogenic':
+            # Визначення рівня ризику
+            if self.current_risk < 1:
+                self.risk_level = 'low'
+            elif 1 <= self.current_risk < 10:
+                self.risk_level = 'medium'
+            else:
+                self.risk_level = 'high'
+        else:
+            # Визначення рівня ризику
+            if self.current_risk < 1:
+                self.risk_level = 'low'
+            elif 1 <= self.current_risk < 10:
+                self.risk_level = 'medium'
+            else:
+                self.risk_level = 'high'
+
+
     def save(self, *args, **kwargs):
         self.tax_rate = self.pollutant.tax_rate
         self.calculated_tax = self.calculate_tax()
+        self.calculate_risk()  # Додаємо обчислення ризику
         super().save(*args, **kwargs)
+
+
 
 
     class Meta:
